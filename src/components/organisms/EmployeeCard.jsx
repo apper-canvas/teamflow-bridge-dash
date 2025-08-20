@@ -6,6 +6,15 @@ import Avatar from "@/components/atoms/Avatar";
 import StatusBadge from "@/components/molecules/StatusBadge";
 import { format } from "date-fns";
 
+// Safe date parsing utility to prevent date-fns errors
+const safeParseDate = (dateValue) => {
+  if (!dateValue || dateValue === '' || dateValue === null || dateValue === undefined) {
+    return null;
+  }
+  const parsedDate = new Date(dateValue);
+  return isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 const EmployeeCard = ({ employee, onEdit, onView, onDelete, className }) => {
   const fullName = `${employee.firstName} ${employee.lastName}`;
 
@@ -43,8 +52,11 @@ const EmployeeCard = ({ employee, onEdit, onView, onDelete, className }) => {
             <span>{employee.phone}</span>
           </div>
           <div className="flex items-center text-sm text-secondary-600">
-            <ApperIcon name="Calendar" className="w-4 h-4 mr-2 text-secondary-400" />
-            <span>Joined {format(new Date(employee.hireDate), "MMM yyyy")}</span>
+<ApperIcon name="Calendar" className="w-4 h-4 mr-2 text-secondary-400" />
+            <span>Joined {(() => {
+              const hireDate = safeParseDate(employee.hireDate);
+              return hireDate ? format(hireDate, "MMM yyyy") : "Unknown";
+            })()}</span>
           </div>
         </div>
 

@@ -14,6 +14,15 @@ import { leaveRequestService } from "@/services/api/leaveRequestService";
 import { employeeService } from "@/services/api/employeeService";
 import { format, differenceInDays } from "date-fns";
 
+// Safe date parsing utility to prevent date-fns errors
+const safeParseDate = (dateValue) => {
+  if (!dateValue || dateValue === '' || dateValue === null || dateValue === undefined) {
+    return null;
+  }
+  const parsedDate = new Date(dateValue);
+  return isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 const LeaveRequests = () => {
   const { onMenuClick } = useOutletContext();
   
@@ -209,7 +218,9 @@ const LeaveRequests = () => {
                   const employee = employees.find(emp => emp.Id.toString() === request.employeeId);
                   if (!employee) return null;
 
-                  const duration = differenceInDays(new Date(request.endDate), new Date(request.startDate)) + 1;
+const startDate = safeParseDate(request.startDate);
+                  const endDate = safeParseDate(request.endDate);
+                  const duration = (startDate && endDate) ? differenceInDays(endDate, startDate) + 1 : 0;
 
                   return (
                     <div key={request.Id} className="p-6 hover:bg-secondary-50 transition-colors">
@@ -226,9 +237,16 @@ const LeaveRequests = () => {
                             </h3>
                             <p className="text-sm text-secondary-600">{employee.role} • {employee.department}</p>
                             <div className="flex items-center space-x-4 mt-2">
-                              <div className="flex items-center text-sm text-secondary-600">
+<div className="flex items-center text-sm text-secondary-600">
                                 <ApperIcon name="Calendar" className="w-4 h-4 mr-1" />
-                                {format(new Date(request.startDate), "MMM dd")} - {format(new Date(request.endDate), "MMM dd, yyyy")}
+                                {(() => {
+                                  const startDate = safeParseDate(request.startDate);
+                                  const endDate = safeParseDate(request.endDate);
+                                  if (startDate && endDate) {
+                                    return `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd, yyyy")}`;
+                                  }
+                                  return "Invalid dates";
+                                })()}
                               </div>
                               <div className="flex items-center text-sm text-secondary-600">
                                 <ApperIcon name="Clock" className="w-4 h-4 mr-1" />
@@ -244,8 +262,11 @@ const LeaveRequests = () => {
                                 <span className="font-medium">Reason:</span> {request.reason}
                               </p>
                             )}
-                            <p className="text-xs text-secondary-500 mt-1">
-                              Requested on {format(new Date(request.requestDate), "MMM dd, yyyy")}
+<p className="text-xs text-secondary-500 mt-1">
+                              Requested on {(() => {
+                                const requestDate = safeParseDate(request.requestDate);
+                                return requestDate ? format(requestDate, "MMM dd, yyyy") : "Unknown date";
+                              })()}
                               {request.approvedBy && ` • ${request.status} by ${request.approvedBy}`}
                             </p>
                           </div>

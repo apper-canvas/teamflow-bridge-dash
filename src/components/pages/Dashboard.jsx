@@ -12,6 +12,15 @@ import { attendanceService } from "@/services/api/attendanceService";
 import { leaveRequestService } from "@/services/api/leaveRequestService";
 import { format, startOfMonth, endOfMonth, isToday } from "date-fns";
 
+// Safe date parsing utility to prevent date-fns errors
+const safeParseDate = (dateValue) => {
+  if (!dateValue || dateValue === '' || dateValue === null || dateValue === undefined) {
+    return null;
+  }
+  const parsedDate = new Date(dateValue);
+  return isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 const Dashboard = () => {
   const { onMenuClick } = useOutletContext();
   
@@ -48,8 +57,11 @@ const Dashboard = () => {
       setLeaveRequests(leaveRequestsData);
 
       // Calculate stats
-      const activeEmployees = employeesData.filter(emp => emp.status === "Active").length;
-      const todayAttendance = attendanceData.filter(att => isToday(new Date(att.date)));
+const activeEmployees = employeesData.filter(emp => emp.status === "Active").length;
+      const todayAttendance = attendanceData.filter(att => {
+        const date = safeParseDate(att.date);
+        return date && isToday(date);
+      });
       const presentToday = todayAttendance.filter(att => att.status === "Present" || att.status === "Late").length;
       const pendingRequests = leaveRequestsData.filter(req => req.status === "Pending").length;
 
@@ -218,7 +230,10 @@ const Dashboard = () => {
               <div className="p-6">
                 <div className="space-y-4">
                   {attendance
-                    .filter(att => isToday(new Date(att.date)))
+.filter(att => {
+                      const date = safeParseDate(att.date);
+                      return date && isToday(date);
+                    })
                     .slice(0, 5)
                     .map((att) => {
                       const employee = employees.find(emp => emp.Id.toString() === att.employeeId);
@@ -242,8 +257,11 @@ const Dashboard = () => {
                           <div className="flex items-center space-x-2">
                             <StatusBadge status={att.status} type="attendance" />
                             {att.checkIn && (
-                              <span className="text-xs text-secondary-500">
-                                {format(new Date(att.checkIn), "HH:mm")}
+<span className="text-xs text-secondary-500">
+                                {(() => {
+                                  const checkInDate = safeParseDate(att.checkIn);
+                                  return checkInDate ? format(checkInDate, "HH:mm") : "--:--";
+                                })()}
                               </span>
                             )}
                           </div>
@@ -282,8 +300,15 @@ const Dashboard = () => {
                               <p className="text-sm font-medium text-secondary-900">
                                 {employee.firstName} {employee.lastName}
                               </p>
-                              <p className="text-xs text-secondary-600">
-                                {request.type} • {format(new Date(request.startDate), "MMM dd")} - {format(new Date(request.endDate), "MMM dd")}
+<p className="text-xs text-secondary-600">
+                                {request.type} • {(() => {
+                                  const startDate = safeParseDate(request.startDate);
+                                  const endDate = safeParseDate(request.endDate);
+                                  if (startDate && endDate) {
+                                    return `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd")}`;
+                                  }
+                                  return "Invalid dates";
+                                })()}
                               </p>
                             </div>
                           </div>

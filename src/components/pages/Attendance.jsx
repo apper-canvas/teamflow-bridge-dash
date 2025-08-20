@@ -12,6 +12,15 @@ import { attendanceService } from "@/services/api/attendanceService";
 import { employeeService } from "@/services/api/employeeService";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 
+// Safe date parsing utility to prevent date-fns errors
+const safeParseDate = (dateValue) => {
+  if (!dateValue || dateValue === '' || dateValue === null || dateValue === undefined) {
+    return null;
+  }
+  const parsedDate = new Date(dateValue);
+  return isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 const Attendance = () => {
   const { onMenuClick } = useOutletContext();
   
@@ -44,16 +53,19 @@ const Attendance = () => {
     }
   };
 
-  const getTodayAttendance = () => {
-    return attendance.filter(att => isToday(new Date(att.date)));
+const getTodayAttendance = () => {
+    return attendance.filter(att => {
+      const date = safeParseDate(att.date);
+      return date && isToday(date);
+    });
   };
 
   const getMonthlyStats = () => {
     const monthStart = startOfMonth(selectedDate);
     const monthEnd = endOfMonth(selectedDate);
-    const monthlyAttendance = attendance.filter(att => {
-      const date = new Date(att.date);
-      return date >= monthStart && date <= monthEnd;
+const monthlyAttendance = attendance.filter(att => {
+      const date = safeParseDate(att.date);
+      return date && date >= monthStart && date <= monthEnd;
     });
 
     const stats = {
@@ -225,16 +237,22 @@ const Attendance = () => {
                             
                             <div className="flex items-center space-x-4">
                               <div className="text-right">
-                                {record.checkIn && (
-                                  <p className="text-sm text-secondary-900">
-                                    In: {format(new Date(record.checkIn), "HH:mm")}
-                                  </p>
-                                )}
-                                {record.checkOut && (
-                                  <p className="text-sm text-secondary-600">
-                                    Out: {format(new Date(record.checkOut), "HH:mm")}
-                                  </p>
-                                )}
+{record.checkIn && (() => {
+                                  const checkInDate = safeParseDate(record.checkIn);
+                                  return checkInDate ? (
+                                    <p className="text-sm text-secondary-900">
+                                      In: {format(checkInDate, "HH:mm")}
+                                    </p>
+                                  ) : null;
+                                })()}
+                                {record.checkOut && (() => {
+                                  const checkOutDate = safeParseDate(record.checkOut);
+                                  return checkOutDate ? (
+                                    <p className="text-sm text-secondary-600">
+                                      Out: {format(checkOutDate, "HH:mm")}
+                                    </p>
+                                  ) : null;
+                                })()}
                               </div>
                               <StatusBadge status={record.status} type="attendance" />
                             </div>
@@ -310,10 +328,10 @@ const Attendance = () => {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
-                    {Object.values(attendanceByEmployee).map(({ employee, records }) => {
+{Object.values(attendanceByEmployee).map(({ employee, records }) => {
                       const monthlyRecords = records.filter(record => {
-                        const date = new Date(record.date);
-                        return date >= startOfMonth(selectedDate) && date <= endOfMonth(selectedDate);
+                        const date = safeParseDate(record.date);
+                        return date && date >= startOfMonth(selectedDate) && date <= endOfMonth(selectedDate);
                       });
 
                       const presentDays = monthlyRecords.filter(r => r.status === "Present").length;
