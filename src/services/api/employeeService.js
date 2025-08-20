@@ -5,7 +5,7 @@ const apperClient = new ApperClient({
   apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
 });
 
-const tableName = 'Employee_c';
+const tableName = 'employee_c';
 
 export const employeeService = {
   async getAll() {

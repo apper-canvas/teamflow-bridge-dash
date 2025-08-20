@@ -5,7 +5,7 @@ const apperClient = new ApperClient({
   apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
 });
 
-const tableName = 'LeaveRequest_c';
+const tableName = 'leave_request_c';
 
 export const leaveRequestService = {
   async getAll() {
