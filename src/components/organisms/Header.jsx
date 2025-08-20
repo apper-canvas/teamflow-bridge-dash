@@ -1,9 +1,25 @@
-import React from "react";
+import React, { useContext } from "react";
 import { cn } from "@/utils/cn";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import SearchBar from "@/components/molecules/SearchBar";
+import { AuthContext } from "../../App";
 
+const LogoutButton = () => {
+  const { logout } = useContext(AuthContext);
+  
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={logout}
+      className="text-red-600 border-red-300 hover:bg-red-50"
+    >
+      <ApperIcon name="LogOut" className="w-4 h-4 mr-1" />
+      Logout
+    </Button>
+  );
+};
 const Header = ({ 
   title,
   onMenuClick,
@@ -34,7 +50,7 @@ const Header = ({
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+<div className="flex items-center space-x-4">
           {showSearch && (
             <div className="hidden md:block">
               <SearchBar
@@ -50,6 +66,8 @@ const Header = ({
               {actions}
             </div>
           )}
+          
+          <LogoutButton />
         </div>
       </div>
     </header>
